@@ -1,9 +1,10 @@
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from supabase_service import get_guide, get_posts
 
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-model = genai.GenerativeModel("gemini-2.0-flash")
+client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+MODEL = "gemini-1.5-flash"
 
 def build_system_prompt() -> str:
     guide = get_guide()
@@ -28,15 +29,17 @@ def build_system_prompt() -> str:
 def generate_post(topic: str) -> str:
     system = build_system_prompt()
     prompt = f"Напиши пост на тему: {topic}"
-    response = model.generate_content(
-        [{"role": "user", "parts": [system + "\n\n" + prompt]}]
+    response = client.models.generate_content(
+        model=MODEL,
+        contents=system + "\n\n" + prompt
     )
     return response.text
 
 def suggest_topics(count: int = 5) -> str:
     system = build_system_prompt()
     prompt = f"Предложи {count} идей для постов. Учитывай гайд и стиль автора. Выдай просто список тем, без лишних слов."
-    response = model.generate_content(
-        [{"role": "user", "parts": [system + "\n\n" + prompt]}]
+    response = client.models.generate_content(
+        model=MODEL,
+        contents=system + "\n\n" + prompt
     )
     return response.text
