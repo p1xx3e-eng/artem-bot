@@ -46,7 +46,7 @@ async def cmd_topics(message: Message):
         topics = ai.suggest_topics(count=5)
         await message.answer(topics)
     except Exception as e:
-        await message.answer(f"Ошибка: {e}")
+        await message.answer(f"Ошибка [{type(e).__name__}]: {e}")
 
 # ───────────────────────────── Upload guide ─────────────────────────────
 
@@ -108,7 +108,7 @@ async def handle_topic(message: Message):
         post = ai.generate_post(topic)
         await message.answer(post)
     except Exception as e:
-        await message.answer(f"Ошибка генерации: {e}")
+        await message.answer(f"Ошибка генерации [{type(e).__name__}]: {e}")
 
 # ───────────────────────────── Helper ─────────────────────────────
 
