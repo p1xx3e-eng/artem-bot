@@ -1,10 +1,9 @@
 import os
-from google import genai
-from google.genai import types
+from groq import Groq
 from supabase_service import get_guide, get_posts
 
-client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-MODEL = "gemini-1.5-flash"
+client = Groq(api_key=os.environ["GROQ_API_KEY"])
+MODEL = "llama-3.3-70b-versatile"
 
 def build_system_prompt() -> str:
     guide = get_guide()
@@ -29,17 +28,23 @@ def build_system_prompt() -> str:
 def generate_post(topic: str) -> str:
     system = build_system_prompt()
     prompt = f"Напиши пост на тему: {topic}"
-    response = client.models.generate_content(
+    response = client.chat.completions.create(
         model=MODEL,
-        contents=system + "\n\n" + prompt
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": prompt}
+        ]
     )
-    return response.text
+    return response.choices[0].message.content
 
 def suggest_topics(count: int = 5) -> str:
     system = build_system_prompt()
     prompt = f"Предложи {count} идей для постов. Учитывай гайд и стиль автора. Выдай просто список тем, без лишних слов."
-    response = client.models.generate_content(
+    response = client.chat.completions.create(
         model=MODEL,
-        contents=system + "\n\n" + prompt
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": prompt}
+        ]
     )
-    return response.text
+    return response.choices[0].message.content
