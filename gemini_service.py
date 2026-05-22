@@ -1,50 +1,44 @@
 import os
-from groq import Groq
+from google import genai
 from supabase_service import get_guide, get_posts
 
-client = Groq(api_key=os.environ["GROQ_API_KEY"])
-MODEL = "llama-3.3-70b-versatile"
+client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+MODEL = "gemini-2.0-flash"
 
 def build_system_prompt() -> str:
     guide = get_guide()
-    posts = get_posts(limit=10)
+    posts = get_posts(limit=15)
 
     examples_text = "\n\n---\n\n".join(posts) if posts else "Примеров постов пока нет."
-    guide_text = (guide[:3000] + "...") if guide and len(guide) > 3000 else (guide or "Гайд по постингу пока не загружен.")
+    guide_text = (guide[:3000] + "...") if guide and len(guide) > 3000 else (guide or "Гайд не загружен.")
 
-    return f"""Ты — ИИ-помощник для написания постов в Telegram-канал.
+    return f"""Ты помогаешь писать посты для Telegram-канала. Твоя задача — писать ТОЧНО в стиле автора.
 
-## ГАЙД ПО ПОСТИНГУ:
-{guide_text}
-
-## ПРИМЕРЫ ПОСТОВ АВТОРА (изучи стиль, тон, структуру):
+ПРИМЕРЫ ПОСТОВ АВТОРА (копируй стиль, тон, длину, подачу):
 {examples_text}
 
-## ТВОЯ ЗАДАЧА:
-Писать посты точно в стиле автора — такой же тон, длина, структура, подача.
-Не добавляй ничего от себя. Не объясняй что ты сделал. Просто пиши пост.
+ГАЙД ПО ПОСТИНГУ:
+{guide_text}
+
+ПРАВИЛА:
+- Пиши точно как автор — тот же разговорный стиль, те же обороты, та же длина
+- Никаких иероглифов и иностранных слов кроме английских терминов из IT
+- Не объясняй что ты сделал — просто пиши пост
+- Никаких вступлений типа "Вот пост:" — сразу текст
 """
 
 def generate_post(topic: str) -> str:
     system = build_system_prompt()
-    prompt = f"Напиши пост на тему: {topic}"
-    response = client.chat.completions.create(
+    response = client.models.generate_content(
         model=MODEL,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": prompt}
-        ]
+        contents=f"{system}\n\nНапиши пост на тему: {topic}"
     )
-    return response.choices[0].message.content
+    return response.text
 
 def suggest_topics(count: int = 5) -> str:
     system = build_system_prompt()
-    prompt = f"Предложи {count} идей для постов. Учитывай гайд и стиль автора. Выдай просто список тем, без лишних слов."
-    response = client.chat.completions.create(
+    response = client.models.generate_content(
         model=MODEL,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": prompt}
-        ]
+        contents=f"{system}\n\nПредложи {count} идей для постов. Учитывай стиль и тематику канала. Просто список тем без лишних слов."
     )
-    return response.choices[0].message.content
+    return response.text
