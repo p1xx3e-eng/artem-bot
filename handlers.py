@@ -77,8 +77,10 @@ async def cmd_upload_posts(message: Message):
         "Можно по одному или несколько подряд."
     )
 
-@router.message(F.document, F.document.mime_type == "text/html")
+@router.message(F.document)
 async def handle_html(message: Message):
+    if not (message.document.file_name or "").endswith(".html"):
+        return
     await message.answer("Парсю посты...")
     try:
         file_bytes = await _download_file(message.bot, message.document)
