@@ -7,10 +7,10 @@ MODEL = "llama-3.3-70b-versatile"
 
 def build_system_prompt() -> str:
     guide = get_guide()
-    posts = get_posts(limit=30)
+    posts = get_posts(limit=10)
 
     examples_text = "\n\n---\n\n".join(posts) if posts else "Примеров постов пока нет."
-    guide_text = guide if guide else "Гайд по постингу пока не загружен."
+    guide_text = (guide[:3000] + "...") if guide and len(guide) > 3000 else (guide or "Гайд по постингу пока не загружен.")
 
     return f"""Ты — ИИ-помощник для написания постов в Telegram-канал.
 
