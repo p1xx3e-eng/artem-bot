@@ -13,12 +13,9 @@ def parse_telegram_html(file_bytes: bytes) -> list[str]:
     soup = BeautifulSoup(file_bytes, "html.parser")
     posts = []
 
-    # Telegram export: посты в div.message
-    for msg in soup.select("div.message"):
-        text_div = msg.select_one("div.text")
-        if text_div:
-            text = text_div.get_text(separator="\n").strip()
-            if len(text) > 50:  # пропускаем совсем короткие
-                posts.append(text)
+    for text_div in soup.select("div.text"):
+        text = text_div.get_text(separator="\n").strip()
+        if len(text) > 50:
+            posts.append(text)
 
     return posts
