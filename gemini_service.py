@@ -3,7 +3,7 @@ from groq import Groq
 from supabase_service import get_guide, get_posts
 
 client = Groq(api_key=os.environ["GROQ_API_KEY"])
-MODEL = "mistral-saba-24b"
+MODEL = "llama-3.3-70b-versatile"
 
 def build_system_prompt() -> str:
     guide = get_guide()
