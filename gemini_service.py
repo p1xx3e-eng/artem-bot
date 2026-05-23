@@ -3,7 +3,7 @@ from google import genai
 from supabase_service import get_guide, get_posts
 
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-MODEL = "gemini-1.5-flash"
+MODEL = "gemini-2.0-flash-lite"
 
 def build_system_prompt() -> str:
     guide = get_guide()
