@@ -3,7 +3,7 @@ from groq import Groq
 from supabase_service import get_guide, get_posts
 
 client = Groq(api_key=os.environ["GROQ_API_KEY"])
-MODEL = "llama-3.3-70b-versatile"
+MODEL = "deepseek-r1-distill-llama-70b"
 
 def build_system_prompt() -> str:
     guide = get_guide()
@@ -26,7 +26,8 @@ def build_system_prompt() -> str:
 - Эмодзи иногда, не часто, по месту
 - Говорит прямо, без экивоков, называет вещи своими именами
 - Тематика: фриланс, веб-разработка, деньги, клиенты, личный рост, прошлое, окружение
-- НИКАКИХ иероглифов и иностранных слов кроме IT-терминов на английском
+- НИКАКИХ иероглифов, китайских символов и английских слов в русском тексте (кроме IT-терминов: React, WordPress, кворк и т.д.)
+- Думай и пиши ТОЛЬКО на русском языке
 - Не начинать пост со слова "Я"
 
 ПРИМЕРЫ РЕАЛЬНЫХ ПОСТОВ АВТОРА:
