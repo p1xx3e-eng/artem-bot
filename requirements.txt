@@ -1,5 +1,5 @@
 aiogram==3.13.1
 supabase==2.9.0
-groq
+google-genai
 PyMuPDF==1.24.14
 beautifulsoup4==4.12.3
