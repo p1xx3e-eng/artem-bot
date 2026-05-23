@@ -1,44 +1,61 @@
 import os
-from google import genai
+from groq import Groq
 from supabase_service import get_guide, get_posts
 
-client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-MODEL = "gemini-2.0-flash"
+client = Groq(api_key=os.environ["GROQ_API_KEY"])
+MODEL = "llama-3.3-70b-versatile"
 
 def build_system_prompt() -> str:
     guide = get_guide()
-    posts = get_posts(limit=15)
+    posts = get_posts(limit=5)
 
-    examples_text = "\n\n---\n\n".join(posts) if posts else "Примеров постов пока нет."
-    guide_text = (guide[:3000] + "...") if guide and len(guide) > 3000 else (guide or "Гайд не загружен.")
+    # Режем каждый пост до 400 символов
+    trimmed = [p[:400] for p in posts]
+    examples_text = "\n\n---\n\n".join(trimmed) if trimmed else ""
 
-    return f"""Ты помогаешь писать посты для Telegram-канала. Твоя задача — писать ТОЧНО в стиле автора.
+    # Режем гайд до 1500 символов
+    guide_text = (guide[:1500] + "...") if guide and len(guide) > 1500 else (guide or "")
 
-ПРИМЕРЫ ПОСТОВ АВТОРА (копируй стиль, тон, длину, подачу):
-{examples_text}
+    system = """Ты пишешь посты для Telegram-канала веб-разработчика фрилансера.
 
-ГАЙД ПО ПОСТИНГУ:
-{guide_text}
+СТИЛЬ АВТОРА:
+- Разговорный, живой, без воды
+- Пишет от первого лица, делится личным опытом
+- Может использовать мат (хуйня, подзаебали и т.д.) — это его стиль
+- Темы: фриланс, клиенты, верстка, WordPress, кворк, профи.ру, заработок, обучение
+- Длина поста — средняя, не портянка и не 2 строчки
+- Никаких иероглифов и китайских символов
+- Никаких вступлений типа "Вот пост" — сразу текст
+- Не пиши как ChatGPT — пиши как живой человек"""
 
-ПРАВИЛА:
-- Пиши точно как автор — тот же разговорный стиль, те же обороты, та же длина
-- Никаких иероглифов и иностранных слов кроме английских терминов из IT
-- Не объясняй что ты сделал — просто пиши пост
-- Никаких вступлений типа "Вот пост:" — сразу текст
-"""
+    if examples_text:
+        system += f"\n\nПРИМЕРЫ ЕГО ПОСТОВ:\n{examples_text}"
+
+    if guide_text:
+        system += f"\n\nГАЙД ПО ПОСТИНГУ:\n{guide_text}"
+
+    return system
 
 def generate_post(topic: str) -> str:
     system = build_system_prompt()
-    response = client.models.generate_content(
+    response = client.chat.completions.create(
         model=MODEL,
-        contents=f"{system}\n\nНапиши пост на тему: {topic}"
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": f"Напиши пост на тему: {topic}"}
+        ],
+        max_tokens=600
     )
-    return response.text
+    return response.choices[0].message.content
 
 def suggest_topics(count: int = 5) -> str:
     system = build_system_prompt()
-    response = client.models.generate_content(
+    response = client.chat.completions.create(
         model=MODEL,
-        contents=f"{system}\n\nПредложи {count} идей для постов. Учитывай стиль и тематику канала. Просто список тем без лишних слов."
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": f"Предложи {count} идей для постов под этот канал. Просто список, без лишних слов."}
+        ],
+        max_tokens=300
     )
-    return response.text
+    return response.choices[0].message.content
