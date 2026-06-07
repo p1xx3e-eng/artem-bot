@@ -2,7 +2,10 @@ import os
 import anthropic
 from supabase_service import get_guide, get_posts
 
-client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+client = anthropic.Anthropic(
+    api_key=os.environ["ANTHROPIC_API_KEY"],
+    base_url="https://api.anthropic.com"
+)
 MODEL = "claude-haiku-4-5-20251001"
 
 def build_system_prompt() -> str:
