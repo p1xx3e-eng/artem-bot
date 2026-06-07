@@ -1,9 +1,9 @@
 import os
-from google import genai
+import anthropic
 from supabase_service import get_guide, get_posts
 
-client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-MODEL = "gemini-2.0-flash-lite"
+client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+MODEL = "claude-haiku-4-5-20251001"
 
 def build_system_prompt() -> str:
     guide = get_guide()
@@ -45,7 +45,7 @@ def build_system_prompt() -> str:
 - Нумерованные списки (1. 2. 3. и "во-первых", "во-вторых")
 - Жирный текст **вот так**
 - Английские слова в русском тексте кроме IT-терминов
-- Фразы: "мягкие навыки", "тайм-менеджмент", "личная эффективность", "я надеюсь", "я благодарен"
+- Фразы: "мягкие навыки", "тайм-менеджмент", "я надеюсь", "я благодарен"
 - Начинать со слова "Я"
 - Заканчивать на позитивной мотивашке типа "давайте сделаем это!"
 - ChatGPT-шный стиль с выводами в конце"""
@@ -60,16 +60,20 @@ def build_system_prompt() -> str:
 
 def generate_post(topic: str) -> str:
     system = build_system_prompt()
-    response = client.models.generate_content(
+    response = client.messages.create(
         model=MODEL,
-        contents=f"{system}\n\nНапиши пост на тему: {topic}"
+        max_tokens=800,
+        system=system,
+        messages=[{"role": "user", "content": f"Напиши пост на тему: {topic}"}]
     )
-    return response.text
+    return response.content[0].text
 
 def suggest_topics(count: int = 5) -> str:
     system = build_system_prompt()
-    response = client.models.generate_content(
+    response = client.messages.create(
         model=MODEL,
-        contents=f"{system}\n\nПредложи {count} идей для постов под этот канал. Просто список тем, без лишних слов."
+        max_tokens=300,
+        system=system,
+        messages=[{"role": "user", "content": f"Предложи {count} идей для постов под этот канал. Просто список тем, без лишних слов."}]
     )
-    return response.text
+    return response.content[0].text
